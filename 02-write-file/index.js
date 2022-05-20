@@ -1,20 +1,25 @@
 const fs = require('fs');
 const path = require('path');
-const { stdin, stdout } = require('process');
+const { stdin: input, stdout: output } = require('process');
+const readline = require('readline');
+
+const rl = readline.createInterface({ input, output });
 
 const pathToText = path.join(__dirname, 'text.txt');
 
-const output = fs.createWriteStream(pathToText);
+const stream = fs.createWriteStream(pathToText);
 
-stdout.write('Пожалуйста, введите ваш текст\n');
-
-stdin.on('data', chunk => {
-    if (chunk.toString().trim() === 'exit' || chunk.toString().trim() === '.exit') {
-        process.exit();
+const question = () => (rl.question('Пожалуйста, введите текст\n', (answer) => {
+    if (answer === 'exit' || answer === '.exit') {
+        rl.close();
+    } else {
+        stream.write(`${answer}\n`);
+        question();
     }
-    output.write(chunk);
-});
+}))
+question();
 
-process.on('exit', () => {
-    stdout.write('Завершение работы');
-});
+rl.on('close',() => {
+    console.log('Завершение работы');
+    process.exit();
+})
