@@ -5,9 +5,7 @@ const readline = require('readline');
 
 const rl = readline.createInterface({ input, output });
 
-const pathToText = path.join(__dirname, 'text.txt');
-
-const stream = fs.createWriteStream(pathToText);
+const stream = fs.createWriteStream(path.join(__dirname, 'text.txt'));
 
 const question = () => (rl.question('Please, enter your message\n', (answer) => {
     if (answer === 'exit' || answer === '.exit') {
