@@ -9,7 +9,7 @@ const pathToText = path.join(__dirname, 'text.txt');
 
 const stream = fs.createWriteStream(pathToText);
 
-const question = () => (rl.question('Пожалуйста, введите текст\n', (answer) => {
+const question = () => (rl.question('Please, enter your message\n', (answer) => {
     if (answer === 'exit' || answer === '.exit') {
         rl.close();
     } else {
@@ -20,6 +20,6 @@ const question = () => (rl.question('Пожалуйста, введите тек
 question();
 
 rl.on('close',() => {
-    console.log('Завершение работы');
+    console.log('Thank you for your messages, bye!');
     process.exit();
 })
