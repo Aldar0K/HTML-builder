@@ -12,7 +12,7 @@ fs.readdir(pathToInputFolder, (err, files) => {
     if (err) throw err;
     
     for (let i = 0; i < files.length; i++) {
-        if (files[i].split('.')[1] === 'css') {
+        if (path.extname(files[i]).slice(1) === 'css') {
             const input = fs.createReadStream(path.join(pathToInputFolder, files[i]));
 
             let data = '';
