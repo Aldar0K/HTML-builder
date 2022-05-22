@@ -27,28 +27,26 @@ makeFolder(pathToProjectDist);
 makeFolder(pathToAssetsDist);
 
 // Копирование папки assets в папку assets в project-dist.
-fs.readdir(pathToAssetsSrc, (err, items) => {
-    if (err) throw err;
+function copyFolder(pathToSrc, pathToDist) {
+    fs.readdir(pathToSrc, (err, files) => {
+        if (err) throw err;
 
-    items.forEach(item => {
-        const itemSrcPath = path.join(pathToAssetsSrc, item);
-        const itemDestPath = path.join(pathToAssetsDist, item);
-
-        makeFolder(itemDestPath);
-
-        fs.readdir(itemSrcPath, (err, files) => {
-            if (err) throw err;
-
-            files.forEach(file => {
-                const fileSrcPath = path.join(itemSrcPath, file);
-                const fileDestPath = path.join(itemDestPath, file);
-
-                fs.copyFile(fileSrcPath, fileDestPath, err => {
-                    if (err) throw err;
-                });
+        for (let i = 0; i < files.length; i++) {
+            fs.stat(path.join(pathToSrc, files[i]), (err, stats) => {
+                if (err) throw err;
+          
+                if (stats.isDirectory()) {
+                    makeFolder(path.join(pathToDist, files[i]));
+                    copyFolder(path.join(pathToSrc, files[i]), path.join(pathToDist, files[i]));
+                } else {
+                    fs.copyFile(path.join(pathToSrc, files[i]), path.join(pathToDist, files[i]), (err) => {
+                        if (err) throw err;
+                    });
+                }
             });
-        });
+        }
     });
-});
+}
+copyFolder(pathToAssetsSrc, pathToAssetsDist);
 
 // Объединение файлов стилей из папки styles в style.css в папке project-dist.
