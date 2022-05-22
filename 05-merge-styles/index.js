@@ -6,7 +6,7 @@ const pathToOutputFolder = path.join(__dirname, 'project-dist');
 
 const output = fs.createWriteStream(path.join(pathToOutputFolder, 'bundle.css'));
 
-console.log('bundle.css created successfully');
+console.log('bundle.css created successfully!');
 
 fs.readdir(pathToInputFolder, (err, files) => {
     if (err) throw err;
@@ -23,7 +23,7 @@ fs.readdir(pathToInputFolder, (err, files) => {
 
             input.on('error', error => console.log('Error', error.message));
 
-            console.log('css file implemented successfully')
+            console.log('css file implemented successfully!')
         };
     };
 });
