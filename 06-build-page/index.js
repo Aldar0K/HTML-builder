@@ -20,13 +20,13 @@ function makeFolder(path) {
     });
 }
 
-// Создание папки project-dist и assets в project-dist.
+// Создание папки project-dist.
 makeFolder(pathToProjectDist);
 
-// Создание папки assets в project-dist.
-makeFolder(pathToAssetsDist);
 
 // Копирование папки assets в project-dist.
+makeFolder(pathToAssetsDist);
+
 function copyFolder(pathToSrc, pathToDist) {
     fs.readdir(pathToSrc, (err, files) => {
         if (err) throw err;
@@ -49,6 +49,7 @@ function copyFolder(pathToSrc, pathToDist) {
 }
 copyFolder(pathToAssetsSrc, pathToAssetsDist);
 
+
 // Объединение файлов стилей из папки styles в style.css в папке project-dist.
 const streamToStylesCSSDist = fs.createWriteStream(pathToStylesCSSDist);
 
@@ -58,16 +59,14 @@ fs.readdir(pathToStylesSrc, (err, files) => {
     for (let i = 0; i < files.length; i++) {
         if (path.extname(files[i]).slice(1) === 'css') {
             const input = fs.createReadStream(path.join(pathToStylesSrc, files[i]));
-
             let data = '';
-
             input.on('data', chunk => data += chunk);
-
             input.on('end', () => streamToStylesCSSDist.write(data));
-
             input.on('error', error => console.log('Error', error.message));
-
             console.log('css file implemented successfully!')
         };
     };
 });
+
+
+// Запись изменённого шаблона в файл index.html в папке project-dist.
