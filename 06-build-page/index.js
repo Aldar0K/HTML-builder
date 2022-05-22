@@ -26,7 +26,7 @@ makeFolder(pathToProjectDist);
 // Создание папки assets в project-dist.
 makeFolder(pathToAssetsDist);
 
-// Копирование папки assets в папку assets в project-dist.
+// Копирование папки assets в project-dist.
 function copyFolder(pathToSrc, pathToDist) {
     fs.readdir(pathToSrc, (err, files) => {
         if (err) throw err;
@@ -34,7 +34,7 @@ function copyFolder(pathToSrc, pathToDist) {
         for (let i = 0; i < files.length; i++) {
             fs.stat(path.join(pathToSrc, files[i]), (err, stats) => {
                 if (err) throw err;
-          
+
                 if (stats.isDirectory()) {
                     makeFolder(path.join(pathToDist, files[i]));
                     copyFolder(path.join(pathToSrc, files[i]), path.join(pathToDist, files[i]));
@@ -50,3 +50,24 @@ function copyFolder(pathToSrc, pathToDist) {
 copyFolder(pathToAssetsSrc, pathToAssetsDist);
 
 // Объединение файлов стилей из папки styles в style.css в папке project-dist.
+const streamToStylesCSSDist = fs.createWriteStream(pathToStylesCSSDist);
+
+fs.readdir(pathToStylesSrc, (err, files) => {
+    if (err) throw err;
+    
+    for (let i = 0; i < files.length; i++) {
+        if (path.extname(files[i]).slice(1) === 'css') {
+            const input = fs.createReadStream(path.join(pathToStylesSrc, files[i]));
+
+            let data = '';
+
+            input.on('data', chunk => data += chunk);
+
+            input.on('end', () => streamToStylesCSSDist.write(data));
+
+            input.on('error', error => console.log('Error', error.message));
+
+            console.log('css file implemented successfully!')
+        };
+    };
+});
