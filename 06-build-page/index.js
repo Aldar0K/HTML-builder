@@ -1,15 +1,16 @@
 const path = require('path');
 const fs = require('fs');
 
-const pathToProjectDist = path.join(__dirname, 'project-dist');
-const pathToAssetsDist = path.join(pathToProjectDist, 'assets');
-const pathToIndexHTMLDist = path.join(pathToProjectDist, 'index.html');
-const pathToStylesCSSDist = path.join(pathToProjectDist, 'style.css');
-
+// Пути.
 const pathToTemplateHTML = path.join(__dirname, 'template.html');
 const pathToAssetsSrc = path.join(__dirname, 'assets');
 const pathToStylesSrc = path.join(__dirname, 'styles');
 const pathToComponents = path.join(__dirname, 'components');
+
+const pathToProjectDist = path.join(__dirname, 'project-dist');
+const pathToAssetsDist = path.join(pathToProjectDist, 'assets');
+const pathToIndexHTMLDist = path.join(pathToProjectDist, 'index.html');
+const pathToStylesCSSDist = path.join(pathToProjectDist, 'style.css');
 
 // Функция для создания папок.
 function makeFolder(path) {
@@ -61,8 +62,8 @@ fs.readdir(pathToStylesSrc, (err, files) => {
             const input = fs.createReadStream(path.join(pathToStylesSrc, files[i]));
             let data = '';
             input.on('data', chunk => data += chunk);
-            input.on('end', () => streamToStylesCSSDist.write(data));
             input.on('error', error => console.log('Error', error.message));
+            input.on('end', () => streamToStylesCSSDist.write(data));
             console.log('css file implemented successfully!')
         };
     };
@@ -70,3 +71,26 @@ fs.readdir(pathToStylesSrc, (err, files) => {
 
 
 // Запись изменённого шаблона в файл index.html в папке project-dist.
+fs.readFile(pathToTemplateHTML, { encoding: 'utf-8' }, (err, string) => {
+    if (err) throw err;
+
+    fs.readdir(pathToComponents, (err, files) => {
+        if (err) throw err;
+
+        for (let i = 0; i < files.length; i++) {
+            const fileExt = path.extname(files[i]);
+            const fileName = path.basename(files[i], fileExt);
+            const templateName = `{{${fileName}}}`;
+
+            fs.readFile(path.join(pathToComponents, files[i]), { encoding: 'utf-8' }, (err, newString) => {
+                if (err) throw err;
+
+                string = string.replace(templateName, newString);
+
+                fs.writeFile(pathToIndexHTMLDist, string, err => {
+                    if (err) throw err;
+                });
+            });
+        }
+    });
+});

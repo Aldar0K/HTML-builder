@@ -19,9 +19,9 @@ fs.readdir(pathToInputFolder, (err, files) => {
 
             input.on('data', chunk => data += chunk);
 
-            input.on('end', () => output.write(data));
-
             input.on('error', error => console.log('Error', error.message));
+
+            input.on('end', () => output.write(data));
 
             console.log('css file implemented successfully!')
         };
