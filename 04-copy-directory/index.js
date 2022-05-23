@@ -10,6 +10,21 @@ fs.mkdir(pathToOutputFolder, { recursive: true }, (err) => {
     console.log('Directory created successfully!');
 });
 
+// Очистка папки files-copy.
+fs.readdir(pathToOutputFolder, (err, files) => {
+    if (err) throw err;
+
+    if (files.length) {
+        for (let i = 0; i < files.length; i++) {
+            const fileName = path.join(pathToOutputFolder, files[i]);
+
+            fs.unlink(fileName, err => {
+                if (err) throw err;
+            });
+        }
+    }
+});
+
 fs.readdir(pathToInputFolder, (err, files) => {
     if (err) throw err;
     
