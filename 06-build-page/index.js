@@ -71,6 +71,11 @@ fs.readdir(pathToStylesSrc, (err, files) => {
 
 
 // Запись изменённого шаблона в файл index.html в папке project-dist.
+fs.open(pathToIndexHTMLDist, 'w', err => {
+    if (err) throw err;
+    console.log('index.html created!');
+});
+
 fs.readFile(pathToTemplateHTML, { encoding: 'utf-8' }, (err, string) => {
     if (err) throw err;
 
