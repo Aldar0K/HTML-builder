@@ -1,5 +1,5 @@
 const path = require('path');
-const fs = require('fs');
+const fsp = require('fs/promises');
 
 // Пути.
 const pathToTemplateHTML = path.join(__dirname, 'template.html');
@@ -12,90 +12,66 @@ const pathToAssetsDist = path.join(pathToProjectDist, 'assets');
 const pathToIndexHTMLDist = path.join(pathToProjectDist, 'index.html');
 const pathToStylesCSSDist = path.join(pathToProjectDist, 'style.css');
 
-// Функция для создания папок.
-function makeFolder(path) {
-    fs.mkdir(path, { recursive: true }, (err) => {
-        if (err) throw err;
 
-        console.log(`Folder created successfully!`);
-    });
+// Запись изменённого шаблона в файл index.html в папке project-dist.
+async function buildHTML(pathToComponents, pathToTemplateHTML, pathToIndexHTMLDist) {
+    const componentsFiles = await fsp.readdir(pathToComponents, { withFileTypes: true });
+    let html = await fsp.readFile(pathToTemplateHTML, 'utf-8');
+
+    for (const file of componentsFiles) {
+        const fileParsed = path.parse(path.join(pathToComponents, file.name));
+        const fileExt = fileParsed.ext;
+        const fileName = fileParsed.name;
+
+        if (file.isDirectory() || fileExt !== '.html') continue;
+        
+        const fileData = await fsp.readFile(path.join(pathToComponents, file.name), 'utf-8');
+        html = html.replace(`{{${fileName}}}`, fileData);
+    }
+
+    fsp.writeFile(pathToIndexHTMLDist, html);
 }
-
-// Создание папки project-dist.
-makeFolder(pathToProjectDist);
-
-
-// Копирование папки assets в project-dist.
-makeFolder(pathToAssetsDist);
-
-function copyFolder(pathToSrc, pathToDist) {
-    fs.readdir(pathToSrc, (err, files) => {
-        if (err) throw err;
-
-        for (let i = 0; i < files.length; i++) {
-            fs.stat(path.join(pathToSrc, files[i]), (err, stats) => {
-                if (err) throw err;
-
-                if (stats.isDirectory()) {
-                    makeFolder(path.join(pathToDist, files[i]));
-                    copyFolder(path.join(pathToSrc, files[i]), path.join(pathToDist, files[i]));
-                } else {
-                    fs.copyFile(path.join(pathToSrc, files[i]), path.join(pathToDist, files[i]), (err) => {
-                        if (err) throw err;
-                    });
-                }
-            });
-        }
-    });
-}
-copyFolder(pathToAssetsSrc, pathToAssetsDist);
 
 
 // Объединение файлов стилей из папки styles в style.css в папке project-dist.
-const streamToStylesCSSDist = fs.createWriteStream(pathToStylesCSSDist);
+async function buildCSS(pathToStylesSrc, pathToStylesCSSDist) {
+    const cssFiles = await fsp.readdir(pathToStylesSrc, { withFileTypes: true });
 
-fs.readdir(pathToStylesSrc, (err, files) => {
-    if (err) throw err;
-    
-    for (let i = 0; i < files.length; i++) {
-        if (path.extname(files[i]).slice(1) === 'css') {
-            const input = fs.createReadStream(path.join(pathToStylesSrc, files[i]));
-            let data = '';
-            input.on('data', chunk => data += chunk);
-            input.on('error', error => console.log('Error', error.message));
-            input.on('end', () => streamToStylesCSSDist.write(data));
-            console.log('css file implemented successfully!')
-        };
-    };
-});
+    for (const file of cssFiles) {
+        const fileParsed = path.parse(path.join(pathToStylesSrc, file.name));
+        const fileExt = fileParsed.ext;
+
+        if (file.isDirectory() || fileExt !== '.css') continue;
+
+        const fileData = await fsp.readFile(path.join(pathToStylesSrc, file.name), 'utf-8');
+        await fsp.appendFile(pathToStylesCSSDist, fileData);
+    }
+}
 
 
-// Запись изменённого шаблона в файл index.html в папке project-dist.
-fs.open(pathToIndexHTMLDist, 'w', err => {
-    if (err) throw err;
-    console.log('index.html created!');
-});
+// Копирование папки assets в project-dist.
+async function copyFolder(pathToAssetsSrc, pathToAssetsDist) {
+    const fileStats = await fsp.stat(pathToAssetsSrc, { withFileTypes: true });
 
-fs.readFile(pathToTemplateHTML, { encoding: 'utf-8' }, (err, string) => {
-    if (err) throw err;
+    if (fileStats.isDirectory()) {
+        await fsp.mkdir(path.join(pathToAssetsDist));
+        const assetsFiles = await fsp.readdir(path.join(pathToAssetsSrc));
 
-    fs.readdir(pathToComponents, (err, files) => {
-        if (err) throw err;
-
-        for (let i = 0; i < files.length; i++) {
-            const fileExt = path.extname(files[i]);
-            const fileName = path.basename(files[i], fileExt);
-            const templateName = `{{${fileName}}}`;
-
-            fs.readFile(path.join(pathToComponents, files[i]), { encoding: 'utf-8' }, (err, newString) => {
-                if (err) throw err;
-
-                string = string.replace(templateName, newString);
-
-                fs.writeFile(pathToIndexHTMLDist, string, err => {
-                    if (err) throw err;
-                });
-            });
+        for (const file of assetsFiles) {
+            copyFolder(path.join(pathToAssetsSrc, file), path.join(pathToAssetsDist, file))
         }
-    });
-});
+    } else if (fileStats.isFile()) {
+        fsp.copyFile(pathToAssetsSrc, pathToAssetsDist);
+    }
+}
+
+
+// Асинхронная функция для сбора папки project-dist.
+(async () => {
+    await fsp.rm(pathToProjectDist, { force: true, recursive: true });
+    await fsp.mkdir(pathToProjectDist);
+
+    buildHTML(pathToComponents, pathToTemplateHTML, pathToIndexHTMLDist);
+    buildCSS(pathToStylesSrc, pathToStylesCSSDist);
+    copyFolder(pathToAssetsSrc, pathToAssetsDist);
+})();
